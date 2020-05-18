@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 from keras.preprocessing import sequence
 from keras.datasets import imdb
@@ -21,20 +22,23 @@ import argparse
 def load_data(dirname):
     if dirname[-1]!='/':
         dirname=dirname+'/'
+    print("dirname:",dirname)
     listfile=os.listdir(dirname)
     X = []
     Y = []
+    print("listfile:",listfile)
     for file in listfile:
         if "_" in file:
             continue
         wordname=file
         textlist=os.listdir(dirname+wordname)
+	print("textfile:",textlist)
         for text in textlist:
             if "DS_" in text:
                 continue
             textname=dirname+wordname+"/"+text
             numbers=[]
-            #print(textname)
+            print("textname:",textname)
             with open(textname, mode = 'r') as t:
                 numbers = [float(num) for num in t.read().split()]
                 #print(len(numbers[0]))
@@ -48,7 +52,7 @@ def load_data(dirname):
             landmark_frame=np.array(landmark_frame)
             landmark_frame=landmark_frame.reshape(-1,84)#2차원으로 변환(260*42)
             X.append(np.array(landmark_frame))
-            Y.append(wordname)
+            Y.append(textname)
     X=np.array(X)
     Y=np.array(Y)
     print(Y)
@@ -79,6 +83,10 @@ def main(input_data_path,output_data_path):
     --calculator_graph_config_file=mediapipe/graphs/hand_tracking/multi_hand_tracking_desktop_live.pbtxt'
     #미디어 파이프 명령어 저장
     listfile=os.listdir(input_data_path)
+    if not(os.path.isdir(output_data_path+"Relative/")):
+        os.mkdir(output_data_path+"Relative/")
+    if not(os.path.isdir(output_data_path+"Absolute/")):
+        os.mkdir(output_data_path+"Absolute/")
     output_dir=""
     filel=[]
     for file in listfile:
@@ -89,8 +97,10 @@ def main(input_data_path,output_data_path):
         # 하위디렉토리의 모든 비디오들의 이름을 저장
         if not(os.path.isdir(output_data_path+"_"+word)):
             os.mkdir(output_data_path+"_"+word)
-        if not(os.path.isdir(output_data_path+word)):
-            os.mkdir(output_data_path+word)
+        if not(os.path.isdir(output_data_path+"Relative/"+word)):
+            os.mkdir(output_data_path+"Relative/"+word)
+        if not(os.path.isdir(output_data_path+"Absolute/"+word)):
+            os.mkdir(output_data_path+"Absolute/"+word)
         os.system(comp)
         outputfilelist=os.listdir(output_data_path+'_'+word)
         for mp4list in fullfilename:
@@ -102,10 +112,10 @@ def main(input_data_path,output_data_path):
             cmdret=cmd+inputfilen+outputfilen
             os.system(cmdret)
     #mediapipe동작 작동 종료:
-    output_dir=output_data_path
+    output_dir=output_data_path+"Absolute/"
     x_test,Y=load_data(output_dir)
-    new_model = tf.keras.models.load_model('model.h5')
-    #new_model.summary()
+    new_model = tf.keras.models.load_model('Model1.h5')
+    new_model.summary()
 
     labels=load_label()
 
@@ -113,11 +123,11 @@ def main(input_data_path,output_data_path):
 
     xhat = x_test
     yhat = new_model.predict(xhat)
-    print(yhat[1])
+    print("yhat",yhat)
     predictions = np.array([np.argmax(pred) for pred in yhat])
     rev_labels = dict(zip(list(labels.values()), list(labels.keys())))
     s=0
-    filel=np.array(filel)
+    #filel=np.array(filel)
     txtpath=output_data_path+"result.txt" 
     with open(txtpath, "w") as f:
         for i in predictions:
